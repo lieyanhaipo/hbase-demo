@@ -1,4 +1,3 @@
-import javafx.scene.control.Tab;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
@@ -16,6 +15,14 @@ import java.util.List;
 public class HBaseHelper {
     private Connection connection;
     private Admin admin;
+
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public Admin getAdmin() {
+        return admin;
+    }
 
     /**
      * HBase配置
@@ -41,13 +48,12 @@ public class HBaseHelper {
             System.out.println("Table:"+tableName + "already exists!");
         }else{
             HTableDescriptor dsc = new HTableDescriptor(tableNameObj);
-            int len=colFamilies.length;
-            for(int i=0;i<len;i++){
-                HColumnDescriptor family=new HColumnDescriptor(colFamilies[i]);
+            for(int i=0;i<colFamilies.length;i++){
+                HColumnDescriptor family= new HColumnDescriptor(colFamilies[i]);
                 dsc.addFamily(family);
-                admin.createTable(dsc);
-                System.out.println("创建表："+tableName+"成功！");
             }
+            admin.createTable(dsc);
+            System.out.println("创建表："+tableName+"成功！");
         }
     }
 
@@ -116,7 +122,7 @@ public class HBaseHelper {
      * @throws IOException
      */
     public  void deleteRecord(String tableName,String rowkey) throws IOException{
-        Table table = connection.getTable(TableName.valueOf("tableName"));
+        Table table = connection.getTable(TableName.valueOf(tableName));
         Delete del = new Delete(rowkey.getBytes());
         table.delete(del);
         System.out.println(tableName+"删除行"+rowkey+"成功！");
@@ -131,7 +137,7 @@ public class HBaseHelper {
      */
     public Result getOneRecord(String tableName,String rowkey)
         throws IOException{
-        Table table = connection.getTable(TableName.valueOf("tableName"));
+        Table table = connection.getTable(TableName.valueOf(tableName));
         Get get = new Get(rowkey.getBytes());
         Result rs = table.get(get);
         return rs;
@@ -144,7 +150,7 @@ public class HBaseHelper {
      * @throws IOException
      */
     public List<Result> getAllRecord(String tableName) throws IOException{
-        Table table = connection.getTable(TableName.valueOf("tableName"));
+        Table table = connection.getTable(TableName.valueOf(tableName));
         Scan scan = new Scan();
         ResultScanner scanner = table.getScanner(scan);
         List<Result> list = new ArrayList<Result>();
@@ -153,5 +159,16 @@ public class HBaseHelper {
         }
         scanner.close();
         return list;
+    }
+
+    /**
+     * 获取写缓存
+     * @param tableName
+     * @return
+     * @throws IOException
+     */
+    public long getBufferSize(String tableName) throws IOException{
+        BufferedMutator bufferedMutator = connection.getBufferedMutator(TableName.valueOf(tableName));
+        return bufferedMutator.getWriteBufferSize();
     }
 }
